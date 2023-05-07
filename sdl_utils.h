@@ -5,3 +5,4 @@
 
 SDL_Color surface_pixel_color(const SDL_Surface* surface, const V2i* position);
 int color_eq(const SDL_Color a, const SDL_Color b);
+SDL_Color color_lerp(const SDL_Color a, const SDL_Color b, float value);

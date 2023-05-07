@@ -8,4 +8,9 @@ typedef struct {
     float x, y;
 } V2f;
 
-void v2f_from_angle(V2f* vector, float angle);
+typedef struct {
+    double x, y;
+} V2d;
+
+V2d v2d_from_angle(float angle);
+V2f v2f_from_angle(float angle);

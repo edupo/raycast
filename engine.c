@@ -2,10 +2,9 @@
 
 #define PIXELFORMAT SDL_PIXELFORMAT_RGBA32
 
-const int MAX_FPS = 60;
 const int UPDATE_INTERVAL = 1000/MAX_FPS;
 
-Engine* engine_create(int width, int height, char* title){
+Engine* engine_create(V2i window_size, char* title){
     Engine* s = (Engine*) malloc(sizeof(Engine));
 
     SDL_Init(SDL_INIT_EVERYTHING);
@@ -13,8 +12,8 @@ Engine* engine_create(int width, int height, char* title){
         title, 
         SDL_WINDOWPOS_CENTERED, 
         SDL_WINDOWPOS_CENTERED, 
-        width,
-        height,
+        window_size.x,
+        window_size.y,
         SDL_WINDOW_SHOWN);
     s->renderer = SDL_CreateRenderer(s->window, -1, SDL_RENDERER_ACCELERATED);
     SDL_SetWindowResizable(s->window, SDL_TRUE);
@@ -22,12 +21,12 @@ Engine* engine_create(int width, int height, char* title){
         s->renderer, 
         PIXELFORMAT,
         SDL_TEXTUREACCESS_TARGET,
-        width, 
-        height);
+        window_size.x, 
+        window_size.y);
     s->screen_surface = SDL_CreateRGBSurfaceWithFormat(
         0, 
-        width, 
-        height, 
+        window_size.x, 
+        window_size.y, 
         32, 
         PIXELFORMAT);
 
@@ -68,18 +67,18 @@ int engine_on_fps_change(Engine* engine, int fps){
 
 void engine_run(Engine* engine){
     int running = 1;
-    int past = SDL_GetTicks();
-    int now = past, past_fps = past;
+    int past_ms = SDL_GetTicks();
+    int present_ms = past_ms, past_fps = past_ms;
     int fps = 0, frames_skipped = 0;
 
     while ( running ){
-        int time_elapsed = 0;
+        int elapsed_ms = 0;
         running = engine_events();
-        now=SDL_GetTicks();
-        time_elapsed = now - past;
-        if (time_elapsed >= UPDATE_INTERVAL){
-            past = now;
-            if(engine->update) engine->update(time_elapsed);
+        present_ms=SDL_GetTicks();
+        elapsed_ms = present_ms - past_ms;
+        if (elapsed_ms >= UPDATE_INTERVAL){
+            past_ms = present_ms;
+            if(engine->update) engine->update(elapsed_ms);
             if( frames_skipped++ >= engine->frame_skip){
                 if(engine->draw) engine->draw();
                 fps++;
@@ -87,12 +86,12 @@ void engine_run(Engine* engine){
             }
         }
 
-        if(now - past_fps >= 1000){
-            past_fps = now;
+        if(present_ms - past_fps >= 1000){
+            past_fps = present_ms;
             engine_on_fps_change(engine, fps);
             fps = 0;
         }
-        SDL_Delay(UPDATE_INTERVAL/4);
+        SDL_Delay(SDL_clamp(UPDATE_INTERVAL - elapsed_ms, 0, UPDATE_INTERVAL));
     }
 
 }

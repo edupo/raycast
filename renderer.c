@@ -2,25 +2,26 @@
 #include "player.h"
 #include "math.h"
 #include "sdl_utils.h"
+#include "config.h"
 
-const SDL_Color color_black =       (SDL_Color){0x1A,0x1C,0x2C,SDL_ALPHA_OPAQUE};
-const SDL_Color color_white =       (SDL_Color){0xf4,0xf4,0xf4,SDL_ALPHA_OPAQUE};
-const SDL_Color color_purple =      (SDL_Color){0x5D,0x27,0x5D,SDL_ALPHA_OPAQUE};
-const SDL_Color color_red =         (SDL_Color){0xB1,0x3E,0x53,SDL_ALPHA_OPAQUE};
-const SDL_Color color_orange =      (SDL_Color){0xEF,0x7D,0x57,SDL_ALPHA_OPAQUE};
-const SDL_Color color_yellow =      (SDL_Color){0xFF,0xCD,0x75,SDL_ALPHA_OPAQUE};
-const SDL_Color color_lime =        (SDL_Color){0xA7,0xF0,0x70,SDL_ALPHA_OPAQUE};
-const SDL_Color color_green =       (SDL_Color){0x38,0xB7,0x64,SDL_ALPHA_OPAQUE};
-const SDL_Color color_dark_cyan =   (SDL_Color){0x25,0x71,0x79,SDL_ALPHA_OPAQUE};
-const SDL_Color color_dark_blue =   (SDL_Color){0x29,0x36,0x6F,SDL_ALPHA_OPAQUE};
-const SDL_Color color_blue =        (SDL_Color){0x3B,0x5D,0xC9,SDL_ALPHA_OPAQUE};
-const SDL_Color color_light_blue =  (SDL_Color){0x41,0xA6,0xF6,SDL_ALPHA_OPAQUE};
-const SDL_Color color_light_cyan =  (SDL_Color){0x73,0xEF,0xF7,SDL_ALPHA_OPAQUE};
-const SDL_Color color_light_grey =  (SDL_Color){0x94,0xB0,0xC2,SDL_ALPHA_OPAQUE};
-const SDL_Color color_grey =        (SDL_Color){0x56,0x6C,0x86,SDL_ALPHA_OPAQUE};
-const SDL_Color color_dark_grey =   (SDL_Color){0x33,0x3C,0x57,SDL_ALPHA_OPAQUE};
-const SDL_Color color_transparent = (SDL_Color){0x00,0x00,0x00,SDL_ALPHA_TRANSPARENT};
-const SDL_Color color_error =       (SDL_Color){0xFF,0x00,0xFF,SDL_ALPHA_OPAQUE};
+const SDL_Color color_black =       {0x1A,0x1C,0x2C,SDL_ALPHA_OPAQUE};
+const SDL_Color color_white =       {0xf4,0xf4,0xf4,SDL_ALPHA_OPAQUE};
+const SDL_Color color_purple =      {0x5D,0x27,0x5D,SDL_ALPHA_OPAQUE};
+const SDL_Color color_red =         {0xB1,0x3E,0x53,SDL_ALPHA_OPAQUE};
+const SDL_Color color_orange =      {0xEF,0x7D,0x57,SDL_ALPHA_OPAQUE};
+const SDL_Color color_yellow =      {0xFF,0xCD,0x75,SDL_ALPHA_OPAQUE};
+const SDL_Color color_lime =        {0xA7,0xF0,0x70,SDL_ALPHA_OPAQUE};
+const SDL_Color color_green =       {0x38,0xB7,0x64,SDL_ALPHA_OPAQUE};
+const SDL_Color color_dark_cyan =   {0x25,0x71,0x79,SDL_ALPHA_OPAQUE};
+const SDL_Color color_dark_blue =   {0x29,0x36,0x6F,SDL_ALPHA_OPAQUE};
+const SDL_Color color_blue =        {0x3B,0x5D,0xC9,SDL_ALPHA_OPAQUE};
+const SDL_Color color_light_blue =  {0x41,0xA6,0xF6,SDL_ALPHA_OPAQUE};
+const SDL_Color color_light_cyan =  {0x73,0xEF,0xF7,SDL_ALPHA_OPAQUE};
+const SDL_Color color_light_grey =  {0x94,0xB0,0xC2,SDL_ALPHA_OPAQUE};
+const SDL_Color color_grey =        {0x56,0x6C,0x86,SDL_ALPHA_OPAQUE};
+const SDL_Color color_dark_grey =   {0x33,0x3C,0x57,SDL_ALPHA_OPAQUE};
+const SDL_Color color_transparent = {0x00,0x00,0x00,SDL_ALPHA_TRANSPARENT};
+const SDL_Color color_error =       {0xFF,0x00,0xFF,SDL_ALPHA_OPAQUE};
 
 inline void _set_color(SDL_Renderer* r, SDL_Color color)
 {
@@ -31,6 +32,9 @@ Renderer* renderer_create(SDL_Renderer* renderer, SDL_Color background_color){
     Renderer* r = (Renderer*) malloc(sizeof(Renderer));
     r->renderer = renderer;
     r->bg_color = background_color;
+    r->fog_color = background_color;
+    r->fog_min_distance = FOG_MIN_DISTANCE;
+    r->fog_max_distance = FOG_MAX_DISTANCE;
     return r;
 }
 
@@ -74,12 +78,12 @@ void draw_map_player(Renderer* r, Map* m, Player* p, float scale){
         px+p->direction.x*16, py+p->direction.y*16);
 }
 
-void draw_frame(const Renderer* renderer, const Camera* camera, const Map* map, const V2i* size)
+void draw_frame(const Renderer* renderer, const Camera* camera, const Map* map, V2i size)
 {
 
-    for (int i = 0; i < size->x; i++)
+    for (int i = 0; i < size.x; i++)
     {
-        float u = (2.0 * (float)i / (float)size->x - 1.0) * sinf(camera->fov / 2.0);
+        float u = (2.0 * (float)i / (float)size.x - 1.0) * sinf(camera->fov / 2.0);
         V2f ray = {
             camera->dir.x + camera->plane.x * u, 
             camera->dir.y + camera->plane.y * u 
@@ -139,16 +143,17 @@ void draw_frame(const Renderer* renderer, const Camera* camera, const Map* map, 
         int start, end;
         int line_height;
 
-        line_height = size->y / distance;
-        start = -line_height / 2 + size->y / 2;
+        line_height = size.y / distance;
+        start = -line_height / 2 + size.y / 2;
         if(start < 0) start = 0;
-        end = line_height / 2 + size->y / 2;
-        if(end >= size->y) end = size->y;
+        end = line_height / 2 + size.y / 2;
+        if(end >= size.y) end = size.y;
 
+        cell_value = color_lerp(cell_value, renderer->fog_color, 
+        (distance - renderer->fog_min_distance) / (renderer->fog_max_distance - renderer->fog_min_distance));
         _set_color(renderer->renderer, cell_value);
         SDL_RenderDrawLine(renderer->renderer, i, start, i, end);
     }
-    
 }
 
 void renderer_present(Renderer* r){

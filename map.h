@@ -4,8 +4,6 @@
 
 #include "vector.h"
 
-#define TILE_SIZE 64.0
-
 typedef struct {
     size_t width, height;
     size_t lenght;

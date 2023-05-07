@@ -27,6 +27,8 @@ extern const SDL_Color color_error;
 typedef struct{
     SDL_Color bg_color;
     SDL_Renderer* renderer;
+    float fog_min_distance, fog_max_distance;
+    SDL_Color fog_color;
 } Renderer;
 
 void _set_color(SDL_Renderer* r, SDL_Color color);
@@ -37,6 +39,6 @@ void renderer_free(Renderer* r);
 void draw_clear(Renderer* renderer);
 void draw_map(Renderer* renderer, Map* map, float scale);
 void draw_map_player(Renderer* renderer, Map* map, Player* p, float scale);
-void draw_frame(const Renderer* renderer, const Camera* camera, const Map* map, const V2i* size);
+void draw_frame(const Renderer* renderer, const Camera* camera, const Map* map, V2i size);
 
 void renderer_present(Renderer* r);

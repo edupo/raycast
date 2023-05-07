@@ -12,6 +12,7 @@
 #define WIDTH 640 
 #define HEIGHT 480 
 #define RAYS WIDTH 
+#define MIN_MAP_SCALE 4
 
 #ifdef main
 # undef main
@@ -26,18 +27,6 @@ Camera* camera;
 
 float fov;
 float ray_angle; 
-
-int map_data[64] = {
-    1, 1, 1, 1, 1, 1, 1, 1,
-    1, 0, 0, 0, 0, 0, 0, 2,
-    1, 0, 1, 0, 0, 0, 0, 3,
-    1, 0, 0, 0, 0, 0, 0, 4,
-    1, 0, 0, 0, 0, 2, 0, 5,
-    1, 0, 0, 0, 3, 0, 0, 1,
-    1, 0, 0, 0, 0, 0, 0, 1,
-    1, 1, 1, 1, 1, 1, 1, 1,
-    };
-
 
 void update()
 {
@@ -60,15 +49,15 @@ void draw()
 {
     draw_clear(renderer);
     draw_frame(renderer, camera, map, screen_size);
-    draw_map(renderer, map, 32);
-    draw_map_player(renderer, map, player, 32);
+    draw_map(renderer, map, MIN_MAP_SCALE);
+    draw_map_player(renderer, map, player, MIN_MAP_SCALE);
     renderer_present(renderer);
 }
 
 int main(int argc, char **argv)
 {
     player = player_create(4.0, 4.0, 0.0, 0.03);
-    map = map_create(8, 8, map_data);
+    map = map_load("level1.png");
     engine = engine_create(WIDTH, HEIGHT, "gameto");
     renderer = renderer_create(engine->renderer, color_black);
     camera = camera_create(deg2rad(90.0));

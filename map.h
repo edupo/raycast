@@ -1,5 +1,6 @@
 #pragma once
 #include <stdlib.h>
+#include <SDL2/SDL.h>
 
 #include "vector.h"
 
@@ -8,9 +9,10 @@
 typedef struct {
     size_t width, height;
     size_t lenght;
-    int* data;
+    SDL_Color* data;
 } Map;
 
-Map* map_create(size_t width, size_t height, int* data);
+Map* map_load(const char* file);
 void map_free(Map* m);
-int map_get(const Map* m, int x, int y);
+
+SDL_Color map_get(const Map* map, const V2i* position);

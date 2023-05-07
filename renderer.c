@@ -1,6 +1,7 @@
 #include "renderer.h"
 #include "player.h"
 #include "math.h"
+#include "sdl_utils.h"
 
 const SDL_Color color_black =       (SDL_Color){0x1A,0x1C,0x2C,SDL_ALPHA_OPAQUE};
 const SDL_Color color_white =       (SDL_Color){0xf4,0xf4,0xf4,SDL_ALPHA_OPAQUE};
@@ -40,20 +41,24 @@ void renderer_free(Renderer* r){
 void draw_clear(Renderer* r){
     _set_color(r->renderer, r->bg_color);
     SDL_RenderClear(r->renderer);
+    SDL_SetRenderDrawBlendMode(r->renderer, SDL_BLENDMODE_BLEND);
 }
 
 void draw_map(Renderer* r, Map* m, float scale)
 {
-    _set_color(r->renderer, color_white);
     int x, y;
     for (y = 0; y < m->height; y++)
     {
         for (x = 0; x < m->width; x++)
         {
-            if (m->data[y * m->width + x] > 0) 
-                SDL_RenderDrawRect(r->renderer, &(SDL_Rect){
-                    x*scale, y*scale, scale - 1, scale - 1,
-                });
+            SDL_Color color = map_get(m, &(V2i){x, y});
+            if (color.a == SDL_ALPHA_TRANSPARENT) continue;
+
+            color.a = 100;
+            _set_color(r->renderer, color);
+            SDL_RenderFillRect(r->renderer, 
+                &(SDL_Rect){x*scale, y*scale, scale - 1, scale - 1}
+            );
 
         }
     }
@@ -91,7 +96,7 @@ void draw_frame(const Renderer* renderer, const Camera* camera, const Map* map, 
         V2i step;
         int hit = 0;
         int side;
-        int cell_value;
+        SDL_Color cell_value;
 
         if(ray.x < 0){
             step.x = -1;
@@ -118,10 +123,10 @@ void draw_frame(const Renderer* renderer, const Camera* camera, const Map* map, 
                 map_coord.y += step.y;
                 side = 1;
             }
-            cell_value = map_get(map, map_coord.x, map_coord.y);
-            if(cell_value < 0)
+            cell_value = map_get(map, &map_coord);
+            if(color_eq(cell_value, color_error))
                 break;
-            else if (cell_value > 0)
+            else if (cell_value.a == SDL_ALPHA_OPAQUE)
                 hit = 1;
         }
 
@@ -133,7 +138,6 @@ void draw_frame(const Renderer* renderer, const Camera* camera, const Map* map, 
 
         int start, end;
         int line_height;
-        SDL_Color color;
 
         line_height = size->y / distance;
         start = -line_height / 2 + size->y / 2;
@@ -141,17 +145,7 @@ void draw_frame(const Renderer* renderer, const Camera* camera, const Map* map, 
         end = line_height / 2 + size->y / 2;
         if(end >= size->y) end = size->y;
 
-        switch (cell_value)
-        {
-        case 1: color = (side) ? color_yellow : color_orange; break;
-        case 2: color = (side) ? color_blue : color_dark_blue; break;
-        case 3: color = (side) ? color_lime : color_green; break;
-        case 4: color = (side) ? color_light_cyan : color_dark_cyan; break;
-        case 5: color = (side) ? color_grey : color_dark_grey; break;
-        default: color = color_error; break;
-        }
-
-        _set_color(renderer->renderer, color);
+        _set_color(renderer->renderer, cell_value);
         SDL_RenderDrawLine(renderer->renderer, i, start, i, end);
     }
     

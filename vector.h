@@ -8,6 +8,4 @@ typedef struct {
     float x, y;
 } V2f;
 
-V2f v2f_add(V2f a, V2f b);
-V2f v2f_sub(V2f a, V2f b);
-V2f v2f_mul(V2f a, float b);
+void v2f_from_angle(V2f* vector, float angle);

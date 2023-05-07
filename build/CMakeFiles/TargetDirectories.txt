@@ -1,0 +1,3 @@
+C:/Users/eduar/ws/raycast/build/CMakeFiles/game.dir
+C:/Users/eduar/ws/raycast/build/CMakeFiles/edit_cache.dir
+C:/Users/eduar/ws/raycast/build/CMakeFiles/rebuild_cache.dir

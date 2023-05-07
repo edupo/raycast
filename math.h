@@ -10,3 +10,6 @@ extern const float C_3PI2;
 
 extern const float C_D2R;
 extern const float C_R2D;
+
+float deg2rad(float a);
+float rad2deg(float a);

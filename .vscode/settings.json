@@ -4,6 +4,11 @@
         "glut.h": "c",
         "freeglut_std.h": "c",
         "math.h": "c",
-        "vector.h": "c"
+        "vector.h": "c",
+        "system.h": "c",
+        "raycast.h": "c",
+        "cstdlib": "c",
+        "system_error": "c",
+        "typeinfo": "c"
     }
 }

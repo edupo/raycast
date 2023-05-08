@@ -3,6 +3,7 @@
 #include "math.h"
 #include "sdl_utils.h"
 #include "config.h"
+#include "texture.h"
 
 const SDL_Color color_black =       {0x1A,0x1C,0x2C,SDL_ALPHA_OPAQUE};
 const SDL_Color color_white =       {0xf4,0xf4,0xf4,SDL_ALPHA_OPAQUE};
@@ -78,7 +79,7 @@ void draw_map_player(Renderer* r, Map* m, Player* p, float scale){
         px+p->direction.x*16, py+p->direction.y*16);
 }
 
-void draw_frame(const Renderer* renderer, const Camera* camera, const Map* map, V2i size)
+void draw_frame(const Renderer* renderer, const Camera* camera, const Map* map, V2i size, Textures* textures)
 {
 
     for (int i = 0; i < size.x; i++)
@@ -96,11 +97,7 @@ void draw_frame(const Renderer* renderer, const Camera* camera, const Map* map, 
             // (ray.x == 0) ? 1e30 : sqrt(1 + (ray.y * ray.y) / (ray.x * ray.x)),
             // (ray.y == 0) ? 1e30 : sqrt(1 + (ray.x * ray.x) / (ray.y * ray.y))
         };
-        float distance;
         V2i step;
-        int hit = 0;
-        int side;
-        SDL_Color cell_value;
 
         if(ray.x < 0){
             step.x = -1;
@@ -116,7 +113,12 @@ void draw_frame(const Renderer* renderer, const Camera* camera, const Map* map, 
             step.y = 1;
             side_dist.y = (map_coord.y + 1.0 - camera->pos.y) * delta_dist.y;
         }
+
         // DDA
+        int hit = 0;
+        int side;
+        SDL_Color cell_value;
+
         while(hit == 0) {
             if(side_dist.x < side_dist.y){
                 side_dist.x += delta_dist.x;
@@ -133,26 +135,51 @@ void draw_frame(const Renderer* renderer, const Camera* camera, const Map* map, 
             else if (cell_value.a == SDL_ALPHA_OPAQUE)
                 hit = 1;
         }
-
         if (hit == 0) continue;
 
-        distance = (side == 0) ? 
-            side_dist.x - delta_dist.x : 
-            side_dist.y - delta_dist.y;
-
-        int start, end;
+        float distance;
         int line_height;
 
-        line_height = size.y / distance;
-        start = -line_height / 2 + size.y / 2;
-        if(start < 0) start = 0;
-        end = line_height / 2 + size.y / 2;
-        if(end >= size.y) end = size.y;
+        if (side == 0)  {
+            distance = side_dist.x - delta_dist.x;
+            u = camera->pos.y + distance * ray.y;
+        }else{
 
-        cell_value = color_lerp(cell_value, renderer->fog_color, 
-        (distance - renderer->fog_min_distance) / (renderer->fog_max_distance - renderer->fog_min_distance));
+            distance = side_dist.y - delta_dist.y;
+            u = camera->pos.x + distance * ray.x;
+        }
+        u -= floor(u);
+
+        SDL_Texture* tex = textures_get(textures, 1);
+        int tex_width, tex_height, tex_x;
+        tex_x = (int)(u * tex_width);
+        if((side == 0 && ray.x > 0) || (side == 1 && ray.y < 0))
+            tex_x = 128 - tex_x - 1;
+        SDL_QueryTexture(tex, NULL, NULL, &tex_width, &tex_height);
+
+        int src_y, src_h;
+        src_y = (tex_height >> 1) - (int)(0.5 * distance * tex_height);
+        if(src_y < 0) src_y = 0;
+        src_h = (int)(distance * tex_height);
+        if(src_h > tex_height) src_h = tex_height;
+        SDL_Rect src = {tex_x, src_y, 1, src_h};
+
+        float line_scale = 1.0 / distance;
+        int dst_y, dst_h;
+        dst_y = (size.y >> 1) - (int)(0.5 * line_scale * size.y);
+        if(dst_y < 0) dst_y = 0;
+        dst_h = (int)(line_scale * size.y);
+        if(dst_h > size.y) dst_h = size.y;
+        SDL_Rect dst = {i, dst_y, 1, dst_h};
+
+        SDL_RenderCopy(renderer->renderer, tex, &src, &dst);
+
+        cell_value = color_lerp(
+            color_transparent, 
+            renderer->fog_color, 
+            (distance - renderer->fog_min_distance) / (renderer->fog_max_distance - renderer->fog_min_distance));
         _set_color(renderer->renderer, cell_value);
-        SDL_RenderDrawLine(renderer->renderer, i, start, i, end);
+        SDL_RenderDrawLine(renderer->renderer, i, dst.y, i, dst.y + dst.h);
     }
 }
 

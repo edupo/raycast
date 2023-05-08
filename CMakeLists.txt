@@ -10,3 +10,7 @@ target_link_libraries(game -lsdl2 -lsdl2_image)
 add_custom_command(TARGET game PRE_BUILD
                    COMMAND ${CMAKE_COMMAND} -E copy_directory
                    ${CMAKE_SOURCE_DIR}/resources/ $<TARGET_FILE_DIR:game>)
+
+add_custom_command(TARGET game PRE_BUILD
+                   COMMAND ${CMAKE_COMMAND} -E copy_directory
+                   ${CMAKE_SOURCE_DIR}/textures/ $<TARGET_FILE_DIR:game>/textures/)

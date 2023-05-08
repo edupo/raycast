@@ -4,6 +4,7 @@
 #include "map.h"
 #include "player.h"
 #include "camera.h"
+#include "texture.h"
 
 extern const SDL_Color color_black;
 extern const SDL_Color color_white;
@@ -39,6 +40,6 @@ void renderer_free(Renderer* r);
 void draw_clear(Renderer* renderer);
 void draw_map(Renderer* renderer, Map* map, float scale);
 void draw_map_player(Renderer* renderer, Map* map, Player* p, float scale);
-void draw_frame(const Renderer* renderer, const Camera* camera, const Map* map, V2i size);
+void draw_frame(const Renderer* renderer, const Camera* camera, const Map* map, V2i size, Textures* textures);
 
 void renderer_present(Renderer* r);

@@ -8,7 +8,7 @@
 #include "engine.h"
 #include "renderer.h"
 #include "camera.h"
-#include "math.h"
+#include "texture.h"
 
 #ifdef main
 # undef main
@@ -20,6 +20,12 @@ Renderer* renderer;
 Player* player;
 Map* map;
 Camera* camera;
+Textures* textures;
+
+const char* texture_files[] = {
+    "default_wood.png",
+    "default_brick.png",
+};
 
 void update(Uint32 delta_ms)
 {
@@ -54,30 +60,37 @@ void update(Uint32 delta_ms)
 void draw()
 {
     draw_clear(renderer);
-    draw_frame(renderer, camera, map, window_size);
+    draw_frame(renderer, camera, map, window_size, textures);
     draw_map(renderer, map, MINIMAP_SCALE);
     draw_map_player(renderer, map, player, MINIMAP_SCALE);
     renderer_present(renderer);
 }
 
-int main(int argc, char **argv)
-{
+void game_init(){
     player = player_create((V2f){4.0, 4.0}, 0.0);
     map = map_load("level1.png");
     engine = engine_create(window_size, "gameto");
     renderer = renderer_create(engine->renderer, color_black);
+    textures = textures_load(renderer->renderer, texture_files, 2);
     camera = camera_create(deg2rad(90.0));
 
     engine->draw = draw;
     engine->update = update;
+}
 
-    engine_run(engine);
-
+void game_free(){
+    textures_free(textures);
     renderer_free(renderer);
     engine_free(engine);
     player_free(player);
     map_free(map);
     camera_free(camera);
+}
 
+int main(int argc, char **argv)
+{
+    game_init();
+    engine_run(engine);
+    game_free();
     return 0;
 }

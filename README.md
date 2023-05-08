@@ -3,8 +3,10 @@ TODO
 
 - [X] Fog
 - [X] Raycasting
-- [X] Controller
+- [*] Controller - Still separating in a subclass.
 - [X] PNG -> map loader
+- [X] Textures
+- [ ] 2D Raytracing renderer cleanup
 - [ ] Texture loader
 - [ ] Text
 - [ ] User interface

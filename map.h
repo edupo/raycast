@@ -1,16 +1,20 @@
 #pragma once
-#include <stdlib.h>
-#include <SDL2/SDL.h>
 
-#include "vector.h"
+#include <stdlib.h>
+
+#include "ced/types.h"
+#include "ced/texture.h"
+
+#include "tiles.h"
 
 typedef struct {
     size_t width, height;
     size_t lenght;
-    SDL_Color* data;
+    Tile** data;
 } Map;
 
-Map* map_load(const char* file);
+Map* map_load(const char* file, Tile* tile_palette);
 void map_free(Map* m);
 
-SDL_Color map_get(const Map* map, const V2i* position);
+Tile* map_get(const Map* map, const V2i* position);
+Tile* map_get_coords(const Map* m, int x, int y);

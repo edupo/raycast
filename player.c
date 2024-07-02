@@ -1,5 +1,6 @@
 #include <stdlib.h>
-#include <math.h>
+#include "ced/utils.h"
+#include "ced/vector.h"
 
 #include "player.h"
 #include "config.h"

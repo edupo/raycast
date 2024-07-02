@@ -1,31 +1,33 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "ced/ced.h"
+#include "ced/camera.h"
+#include "ced/color.h"
+#include "ced/texture.h"
+#include "ced/utils.h"
+
+#include "renderer_map.h"
+#include "renderer_wall.h"
 #include "config.h"
 #include "player.h"
 #include "map.h"
-#include "vector.h"
-#include "engine.h"
-#include "renderer.h"
-#include "camera.h"
-#include "texture.h"
+#include "tiles.h"
 
 #ifdef main
-# undef main
+# undef main 
 #endif
 
 V2i window_size = (V2i){WINDOW_WIDTH, WINDOW_HEIGHT};
-Engine* engine;
-Renderer* renderer;
+Ced* ced;
+CedRenderer* renderer;
 Player* player;
 Map* map;
-Camera* camera;
-Textures* textures;
+CedCamera* camera;
+CedTextureManager* texture_manager;
+Tile* tile_palette;
 
-const char* texture_files[] = {
-    "default_wood.png",
-    "default_brick.png",
-};
+WallRenderer* wall_renderer;
 
 void update(Uint32 delta_ms)
 {
@@ -54,43 +56,47 @@ void update(Uint32 delta_ms)
         player->command.rotation = 0.0;
     
     player_update(player, delta_s);
-    camera_place(camera, player->position, player->direction);
+    ced_camera_place(camera, player->position, player->direction);
 }
 
 void draw()
 {
-    draw_clear(renderer);
-    draw_frame(renderer, camera, map, window_size, textures);
-    draw_map(renderer, map, MINIMAP_SCALE);
-    draw_map_player(renderer, map, player, MINIMAP_SCALE);
-    renderer_present(renderer);
+    wall_renderer_cast(wall_renderer, camera, map);
+
+    ced_renderer_clear(ced->renderer);
+    draw_map(ced->renderer, map, MINIMAP_SCALE);
+    draw_map_player(ced->renderer, map, player, MINIMAP_SCALE);
+    wall_renderer_draw_textures(wall_renderer, ced->renderer);
 }
 
 void game_init(){
     player = player_create((V2f){4.0, 4.0}, 0.0);
-    map = map_load("level1.png");
-    engine = engine_create(window_size, "gameto");
-    renderer = renderer_create(engine->renderer, color_black);
-    textures = textures_load(renderer->renderer, texture_files, 2);
-    camera = camera_create(deg2rad(90.0));
+    ced = ced_create(window_size, "gameto", color_black);
+    texture_manager = ced_texture_manager_create(ced->renderer, 10);
+    tile_palette = tile_palette_load(texture_manager);
+    map = map_load("level1.png", tile_palette);
+    camera = ced_camera_create(deg2rad(90.0));
+    wall_renderer = wall_renderer_create(window_size);
 
-    engine->draw = draw;
-    engine->update = update;
+    ced->draw = draw;
+    ced->update = update;
 }
 
 void game_free(){
-    textures_free(textures);
-    renderer_free(renderer);
-    engine_free(engine);
     player_free(player);
     map_free(map);
-    camera_free(camera);
+    wall_renderer_free(wall_renderer);
+    tile_palette_free(tile_palette);
+
+    ced_camera_free(camera);
+    ced_texture_manager_free(texture_manager);
+    ced_free(ced);
 }
 
 int main(int argc, char **argv)
 {
     game_init();
-    engine_run(engine);
+    ced_run(ced);
     game_free();
     return 0;
 }
